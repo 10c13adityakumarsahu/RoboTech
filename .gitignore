@@ -12,3 +12,5 @@ node_modules/
 backend/dist/
 frontend/dist/
 frontend/build/
+
+*.mp4
