@@ -12,7 +12,7 @@ export default function Footer() {
        
       "
     >
-      <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-4 gap-10">
+      <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
 
         {/* Logo & About */}
         <div>
@@ -83,7 +83,8 @@ export default function Footer() {
               { to: "/events", label: "Events" },
               { to: "/team", label: "Team" },
               { to: "/#projects", label: "Projects" },
-              { to: "/contactUs", label: "Contact" }
+              { to: "/contactUs", label: "Contact" },
+              {to:"/admin/dashboard",label:"admin login"}
             ].map(link => (
               <li key={link.label}>
                 <Link
@@ -102,7 +103,7 @@ export default function Footer() {
         </div>
 
         {/* Resources */}
-        <div>
+        {/* <div>
           <h4 className="text-lg font-semibold text-white mb-4">
             Resources
           </h4>
@@ -126,7 +127,7 @@ export default function Footer() {
               </a>
             </li>
           </ul>
-        </div>
+        </div> */}
 
         {/* Important Links */}
         <div>
@@ -144,7 +145,7 @@ export default function Footer() {
                 NITK Website
               </a>
             </li>
-            <li>
+            {/* <li>
               <a
                 href="#"
                 target="_blank"
@@ -163,7 +164,7 @@ export default function Footer() {
               >
                 Technical Council
               </a>
-            </li>
+            </li> */}
           </ul>
         </div>
       </div>
