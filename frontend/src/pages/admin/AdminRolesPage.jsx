@@ -20,6 +20,8 @@ export default function AdminRolesPage() {
         { key: "can_manage_team", label: "Manage Team Members" },
         { key: "can_manage_gallery", label: "Manage Gallery" },
         { key: "can_manage_announcements", label: "Manage Announcements" },
+        // NEW PERMISSIONS
+        { key: "can_manage_security", label: "Manage Security & Audits" },
     ];
 
     /* ================= LOAD DATA ================= */
@@ -145,7 +147,7 @@ export default function AdminRolesPage() {
                                         key={perm.key}
                                         className="flex items-center justify-between cursor-pointer group"
                                     >
-                                        <span className="text-sm text-gray-400 group-hover:text-gray-200 transition-colors">
+                                        <span className={`text-sm transition-colors ${perm.key === 'can_manage_security' ? 'text-red-400 font-bold' : 'text-gray-400 group-hover:text-gray-200'}`}>
                                             {perm.label}
                                         </span>
                                         <div

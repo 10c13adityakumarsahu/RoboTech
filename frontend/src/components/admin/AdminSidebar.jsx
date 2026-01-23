@@ -1,17 +1,21 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 
 export default function AdminSidebar({ user, logout }) {
     const location = useLocation();
     const [collapsed, setCollapsed] = useState(false);
 
+    // Helper check perms
+    const hasPerm = (perm) => {
+        if (!user) return false;
+        if (user.role === 'WEB_LEAD') return true;
+        return user.permissions && user.permissions.includes(perm);
+    };
+
     const isActive = (path) => location.pathname === path;
 
     const NavItem = ({ to, icon, label, perm }) => {
-        // Permission Check
-        if (perm && user && user.role !== 'WEB_LEAD' && (!user.permissions || !user.permissions.includes(perm))) {
-            return null;
-        }
+        if (perm && !hasPerm(perm)) return null;
 
         return (
             <Link
@@ -77,10 +81,9 @@ export default function AdminSidebar({ user, logout }) {
 
                 <NavItem to="/admin/profile" icon="👤" label="My Profile" />
                 <NavItem to="/admin/users" icon="👥" label="Users" perm="can_manage_users" />
-                {/* MERGED: Manage SIGs & Profile Fields into one 'Structure' page or just keep separate */}
-                <NavItem to="/admin/taxonomy" icon="🏷️" label="SIGs & Fields" perm="can_manage_users" />
+                <NavItem to="/admin/taxonomy" icon="🏷️" label="Structure" perm="can_manage_users" />
                 <NavItem to="/admin/roles" icon="🔑" label="Roles" perm="can_manage_users" />
-                <NavItem to="/admin/team" icon="🛡️" label="Direct Team" perm="can_manage_team" />
+                <NavItem to="/admin/team" icon="🛡️" label="Team Ordering" perm="can_manage_team" />
 
                 <div className="my-4 border-t border-white/5 mx-4" />
                 <p className={`px-4 text-xs font-bold text-gray-600 uppercase mb-2 ${collapsed && "hidden"}`}>Content</p>
@@ -94,7 +97,13 @@ export default function AdminSidebar({ user, logout }) {
 
                 <NavItem to="/admin/sponsorship" icon="🤝" label="Sponsors" />
                 <NavItem to="/admin/contactMessages" icon="✉️" label="Messages" />
-                <NavItem to="/admin/change-password" icon="🔒" label="Security" />
+
+                {/* Only show Security/Audit Logs to authorized users */}
+                {hasPerm('can_manage_security') && (
+                    <NavItem to="/admin/audit-logs" icon="🛡️" label="Audit Logs" perm="can_manage_security" />
+                )}
+
+                <NavItem to="/admin/change-password" icon="🔒" label="My Password" />
             </nav>
 
             {/* FOOTER */}
