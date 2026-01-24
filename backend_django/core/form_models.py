@@ -7,6 +7,8 @@ class Form(models.Model):
         ('minimal', 'Minimalist Glass'),
         ('industrial', 'Industrial Steel'),
         ('academic', 'Academic Official'),
+        ('solaris', 'Solaris Vivid'),
+        ('midnight', 'Midnight Indigo'),
     ]
 
     title = models.CharField(max_length=200)

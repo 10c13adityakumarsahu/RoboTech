@@ -34,11 +34,18 @@ import AdminFormsPage from "./pages/admin/AdminFormsPage";
 import AdminFormBuilder from "./pages/admin/AdminFormBuilder";
 import AdminFormResponses from "./pages/admin/AdminFormResponses";
 import AdminSponsorshipMessages from "./pages/admin/AdminSponsorship"
+import AdminQuizPage from "./pages/admin/AdminQuizPage";
+import AdminQuizBuilder from "./pages/admin/AdminQuizBuilder";
+import AdminQuizResponses from "./pages/admin/AdminQuizResponses";
 
 /* ===== PUBLIC DETAILS ===== */
 import AnnouncementsPage from "./pages/AnnouncementsPage"
 import AnnouncementDetailPage from "./pages/AnnouncementDetailPage"
 import PublicFormView from "./pages/PublicFormView"
+import QuizPortal from "./pages/QuizPortal";
+import QuizEnrollment from "./pages/QuizEnrollment";
+import QuizEngine from "./pages/QuizEngine";
+import QuizSuccess from "./pages/QuizSuccess";
 
 // ERROR PAGES
 import Error404 from "./pages/Error404";
@@ -58,6 +65,10 @@ function App() {
       <Route path="/announcements/:id" element={<AnnouncementDetailPage />} />
       <Route path="/sponsorship" element={<SponsorshipPage />} />
       <Route path="/forms/:id" element={<PublicFormView />} />
+      <Route path="/quizzes" element={<QuizPortal />} />
+      <Route path="/quizzes/:id/onboarding" element={<QuizEnrollment />} />
+      <Route path="/quizzes/:id/session" element={<QuizEngine />} />
+      <Route path="/quizzes/success" element={<QuizSuccess />} />
 
       {/* ===== AUTH ROUTES ===== */}
       <Route path="/login" element={<AdminLogin />} />
@@ -88,6 +99,9 @@ function App() {
         <Route path="forms" element={<AdminFormsPage />} />
         <Route path="forms/:id" element={<AdminFormBuilder />} />
         <Route path="forms/:id/responses" element={<AdminFormResponses />} />
+        <Route path="quizzes" element={<AdminQuizPage />} />
+        <Route path="quizzes/:id" element={<AdminQuizBuilder />} />
+        <Route path="quizzes/:id/responses" element={<AdminQuizResponses />} />
 
         <Route path="change-password" element={<ChangePassword />} />
         <Route path="audit-logs" element={<AdminAuditLogs />} />

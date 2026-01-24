@@ -9,11 +9,12 @@ from users import urls as user_urls
 from projects import urls as project_urls
 from events import urls as events_urls
 from core import urls as core_urls
+from quizzes import urls as quizzes_urls
 
 # Merge patterns for /api/
 # This allows 'users' and 'projects' to both register routes under /api/
 # without one shadowing the other, assuming their router paths don't conflict.
-api_patterns = user_urls.urlpatterns + project_urls.urlpatterns + events_urls.urlpatterns + core_urls.urlpatterns
+api_patterns = user_urls.urlpatterns + project_urls.urlpatterns + events_urls.urlpatterns + core_urls.urlpatterns + quizzes_urls.urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),

@@ -111,6 +111,7 @@ export default function AdminSidebar({ user, logout }) {
                         <NavItem to="/admin/sponsorship" icon="🤝" label="Sponsors" perm="can_manage_sponsorship" />
                         <NavItem to="/admin/contactMessages" icon="✉️" label="Messages" perm="can_manage_messages" />
                         <NavItem to="/admin/forms" icon="📝" label="Forms" perm="can_manage_forms" />
+                        <NavItem to="/admin/quizzes" icon="🎯" label="Assessments" perm="can_manage_forms" />
 
                         {/* Only show Security/Audit Logs to authorized users */}
                         {hasPerm('can_manage_security') && (

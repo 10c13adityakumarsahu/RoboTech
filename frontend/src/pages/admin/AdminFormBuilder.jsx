@@ -17,6 +17,8 @@ const THEMES = [
     { value: 'minimal', label: 'Minimalist Glass' },
     { value: 'industrial', label: 'Industrial Steel' },
     { value: 'academic', label: 'Academic Official' },
+    { value: 'solaris', label: 'Solaris Vivid' },
+    { value: 'midnight', label: 'Midnight Indigo' },
 ];
 
 export default function AdminFormBuilder() {
@@ -32,7 +34,7 @@ export default function AdminFormBuilder() {
     const [newFieldName, setNewFieldName] = useState("");
     const [newFieldType, setNewFieldType] = useState("text");
     const [isRequired, setIsRequired] = useState(false);
-    const [optionsText, setOptionsText] = useState("");
+    const [optionsList, setOptionsList] = useState([""]);
 
     useEffect(() => {
         fetchForm();
@@ -78,7 +80,7 @@ export default function AdminFormBuilder() {
 
         let options = [];
         if (['select', 'radio', 'checkbox'].includes(newFieldType)) {
-            options = optionsText.split(',').map(o => o.trim()).filter(o => o);
+            options = optionsList.map(o => o.trim()).filter(o => o);
         }
 
         try {
@@ -93,7 +95,7 @@ export default function AdminFormBuilder() {
             });
             setNewFieldName("");
             setIsRequired(false);
-            setOptionsText("");
+            setOptionsList([""]);
             fetchForm();
         } catch (err) { alert("Failed to add field"); }
     };
@@ -296,12 +298,39 @@ export default function AdminFormBuilder() {
                                         {FIELD_TYPES.map(t => <option key={t.value} value={t.value}>{t.icon} {t.label}</option>)}
                                     </select>
                                     {hasOptions && (
-                                        <input
-                                            className="w-full mt-3 bg-black/40 border border-white/10 rounded-xl p-3 text-xs focus:border-orange-500 outline-none"
-                                            placeholder="Split, Options, Here..."
-                                            value={optionsText}
-                                            onChange={e => setOptionsText(e.target.value)}
-                                        />
+                                        <div className="mt-4 space-y-3">
+                                            <label className="block text-[8px] font-black text-orange-500 uppercase tracking-widest px-1">Configure Selection Nodes</label>
+
+                                            <div className="space-y-2">
+                                                {optionsList.map((opt, idx) => (
+                                                    <div key={idx} className="flex gap-2 group/opt">
+                                                        <input
+                                                            className="flex-1 bg-black/40 border border-white/10 rounded-xl p-3 text-xs focus:border-orange-500 outline-none transition-all"
+                                                            placeholder={`Option ${idx + 1}...`}
+                                                            value={opt}
+                                                            onChange={e => {
+                                                                const newList = [...optionsList];
+                                                                newList[idx] = e.target.value;
+                                                                setOptionsList(newList);
+                                                            }}
+                                                        />
+                                                        {optionsList.length > 1 && (
+                                                            <button
+                                                                onClick={() => setOptionsList(optionsList.filter((_, i) => i !== idx))}
+                                                                className="w-10 h-10 rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all text-xs"
+                                                            >✕</button>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+
+                                            <button
+                                                onClick={() => setOptionsList([...optionsList, ""])}
+                                                className="w-full py-3 bg-white/5 border border-dashed border-white/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-gray-400 hover:border-orange-500/50 hover:text-orange-400 transition-all"
+                                            >
+                                                + Add Response Signal
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                                 <button

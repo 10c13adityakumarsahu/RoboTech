@@ -38,6 +38,24 @@ const THEME_STYLES = {
         accent: "text-[#7f8c8d]",
         progress: "bg-[#2c3e50]",
         font: "font-serif"
+    },
+    solaris: {
+        bg: "bg-gradient-to-br from-orange-50 to-white text-orange-950",
+        card: "bg-white/80 backdrop-blur-md border border-orange-200 shadow-xl rounded-3xl",
+        input: "bg-orange-50/50 border border-orange-200 focus:border-orange-500 text-orange-900 placeholder-orange-300",
+        btn: "bg-orange-600 text-white hover:bg-orange-700 shadow-lg shadow-orange-600/20",
+        accent: "text-orange-500",
+        progress: "bg-orange-500",
+        font: "font-sans font-black"
+    },
+    midnight: {
+        bg: "bg-[#020205] text-indigo-100",
+        card: "bg-[#0a0a15] border border-indigo-500/20 shadow-[0_0_50px_rgba(79,70,229,0.1)] rounded-[2rem]",
+        input: "bg-black/50 border border-indigo-500/30 focus:border-indigo-400 text-indigo-200 placeholder-indigo-900",
+        btn: "bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:scale-105 transition-transform",
+        accent: "text-indigo-400",
+        progress: "bg-indigo-600",
+        font: "font-sans font-medium"
     }
 };
 
@@ -63,7 +81,10 @@ export default function PublicFormView() {
             setForm(res.data);
             const initial = {};
             res.data.fields.forEach(f => {
-                if (f.field_type === 'checkbox') initial[f.label] = false;
+                if (f.field_type === 'checkbox') {
+                    if (f.options?.length > 0) initial[f.label] = [];
+                    else initial[f.label] = false;
+                }
                 else initial[f.label] = "";
             });
             setResponses(initial);
@@ -265,7 +286,7 @@ export default function PublicFormView() {
 
                             {field.field_type === 'radio' && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {field.options?.map(opt => (
+                                    {field.options?.length > 0 ? field.options.map(opt => (
                                         <label key={opt} className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 group/opt ${responses[field.label] === opt ? theme.progress + ' text-white' : 'bg-black/20 border-white/5 hover:border-white/20'}`}>
                                             <span className="font-bold text-sm uppercase tracking-tighter">{opt}</span>
                                             <input
@@ -276,20 +297,44 @@ export default function PublicFormView() {
                                             />
                                             <div className={`w-4 h-4 rounded-full border-2 transition-all ${responses[field.label] === opt ? 'bg-white border-white' : 'border-white/20 group-hover/opt:border-white/50'}`} />
                                         </label>
-                                    ))}
+                                    )) : (
+                                        <p className="text-xs text-gray-500 italic">No options configured for this selector.</p>
+                                    )}
                                 </div>
                             )}
 
                             {field.field_type === 'checkbox' && (
-                                <label className={`p-6 rounded-3xl border cursor-pointer transition-all flex items-center gap-6 ${responses[field.label] ? theme.progress + ' text-white' : 'bg-black/20 border-white/5 hover:border-white/20'}`}>
-                                    <input
-                                        type="checkbox"
-                                        className="w-6 h-6 rounded-lg accent-white"
-                                        checked={responses[field.label]}
-                                        onChange={e => handleChange(field.label, e.target.checked)}
-                                    />
-                                    <span className="font-bold text-sm uppercase tracking-widest">Acknowledge & Sync Component</span>
-                                </label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {field.options?.length > 0 ? field.options.map(opt => {
+                                        const isChecked = responses[field.label]?.includes(opt);
+                                        return (
+                                            <label key={opt} className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-center justify-between gap-3 group/opt ${isChecked ? theme.progress + ' text-white' : 'bg-black/20 border-white/5 hover:border-white/20'}`}>
+                                                <span className="font-bold text-sm uppercase tracking-tighter">{opt}</span>
+                                                <input
+                                                    type="checkbox"
+                                                    className="hidden"
+                                                    checked={isChecked}
+                                                    onChange={e => {
+                                                        const current = responses[field.label] || [];
+                                                        if (e.target.checked) handleChange(field.label, [...current, opt]);
+                                                        else handleChange(field.label, current.filter(i => i !== opt));
+                                                    }}
+                                                />
+                                                <div className={`w-4 h-4 rounded-md border-2 transition-all ${isChecked ? 'bg-white border-white' : 'border-white/20 group-hover/opt:border-white/50'}`} />
+                                            </label>
+                                        );
+                                    }) : (
+                                        <label className={`p-6 rounded-3xl border cursor-pointer transition-all flex items-center gap-6 ${responses[field.label] ? theme.progress + ' text-white' : 'bg-black/20 border-white/5 hover:border-white/20'}`}>
+                                            <input
+                                                type="checkbox"
+                                                className="w-6 h-6 rounded-lg accent-white"
+                                                checked={responses[field.label]}
+                                                onChange={e => handleChange(field.label, e.target.checked)}
+                                            />
+                                            <span className="font-bold text-sm uppercase tracking-widest">{field.label}</span>
+                                        </label>
+                                    )}
+                                </div>
                             )}
                         </div>
                     ))}

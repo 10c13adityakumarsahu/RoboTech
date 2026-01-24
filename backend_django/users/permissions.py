@@ -73,6 +73,9 @@ class GlobalPermission(permissions.BasePermission):
             'FormViewSet': 'can_manage_forms',
             'FormSectionViewSet': 'can_manage_forms',
             'FormFieldViewSet': 'can_manage_forms',
+            'QuizViewSet': 'can_manage_forms',
+            'QuestionViewSet': 'can_manage_forms',
+            'QuizAttemptViewSet': 'can_manage_forms',
         }
 
         flag = perm_map.get(view_name)
