@@ -55,11 +55,11 @@ export default function ContactUs() {
 
     setSubmitting(true);
     setSuccess(false);
-   
+
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/contact`,
+        `${import.meta.env.VITE_API_BASE_URL}/contact-messages/`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -68,14 +68,12 @@ export default function ContactUs() {
         }
       );
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
+      if (!res.ok) {
         throw new Error("Contact form submission failed");
       }
 
       setSuccess(true);
-     
+
       setFormValues({ name: "", email: "", subject: "", message: "" });
     } catch (err) {
       console.error("Contact form error:", err);
@@ -244,10 +242,9 @@ export default function ContactUs() {
       {toast.show && (
         <div
           className={`fixed bottom-6 right-6 px-5 py-3 rounded-lg shadow-lg text-sm z-50
-            ${
-              toast.type === "success"
-                ? "bg-green-600"
-                : toast.type === "error"
+            ${toast.type === "success"
+              ? "bg-green-600"
+              : toast.type === "error"
                 ? "bg-red-600"
                 : "bg-indigo-600"
             }`}

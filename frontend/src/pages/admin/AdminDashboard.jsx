@@ -28,15 +28,40 @@ export default function AdminDashboard() {
         </p>
       </div>
 
+      {/* --- QUICK STATS --- */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <StatCard
+          label="Active Workspaces"
+          value={user?.projects_info?.member?.length + user?.projects_info?.led?.length || 0}
+          icon="🛰️"
+          color="cyan"
+        />
+        <StatCard
+          label="Role Status"
+          value={user?.profile?.position || user?.role || "Member"}
+          icon="🛡️"
+          color="purple"
+        />
+      </div>
+
       {/* ===== DASHBOARD GRID ===== */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
 
-        {/* --- PROFILE (QUICK LINK) --- */}
         <DashboardCard
           title="My Profile"
           desc="Update your personal details & photo."
           icon="👤"
           onClick={() => navigate("/admin/profile")}
+          accent="text-white"
+          border="hover:border-white/50"
+        />
+
+        {/* --- WORKSPACE (EVERYONE) --- */}
+        <DashboardCard
+          title="Enter Workspace"
+          desc="Access your assigned projects & tasks."
+          icon="🌌"
+          onClick={() => navigate("/admin/projects")}
           accent="text-cyan-400"
           border="hover:border-cyan-500/50"
         />
@@ -77,11 +102,10 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* --- PROJECTS --- */}
         {hasPermission('can_manage_projects') && (
           <DashboardCard
-            title="Projects"
-            desc="Manage portfolio projects."
+            title="Project Management"
+            desc="Lifecycle and status control."
             icon="🚀"
             onClick={() => navigate("/admin/projects")}
             accent="text-cyan-400"
@@ -126,34 +150,52 @@ export default function AdminDashboard() {
         )}
 
         {/* --- MESSAGES --- */}
-        <DashboardCard
-          title="Messages"
-          desc="Inquiries from Contact Us page."
-          icon="✉️"
-          onClick={() => navigate("/admin/contactMessages")}
-          accent="text-indigo-400"
-          border="hover:border-indigo-500/50"
-        />
+        {hasPermission('can_manage_messages') && (
+          <DashboardCard
+            title="Messages"
+            desc="Inquiries from Contact Us page."
+            icon="✉️"
+            onClick={() => navigate("/admin/contactMessages")}
+            accent="text-indigo-400"
+            border="hover:border-indigo-500/50"
+          />
+        )}
 
         {/* --- SPONSORSHIP --- */}
-        <DashboardCard
-          title="Sponsors"
-          desc="Sponsorship requests and leads."
-          icon="🤝"
-          onClick={() => navigate("/admin/sponsorship")}
-          accent="text-rose-400"
-          border="hover:border-rose-500/50"
-        />
+        {hasPermission('can_manage_sponsorship') && (
+          <DashboardCard
+            title="Sponsors"
+            desc="Sponsorship requests and leads."
+            icon="🤝"
+            onClick={() => navigate("/admin/sponsorship")}
+            accent="text-rose-400"
+            border="hover:border-rose-500/50"
+          />
+        )}
 
         {/* --- SECURITY --- */}
-        <DashboardCard
-          title="Security"
-          desc="Password and access logs."
-          icon="🔒"
-          onClick={() => navigate("/admin/change-password")}
-          accent="text-yellow-400"
-          border="hover:border-yellow-500/50"
-        />
+        {hasPermission('can_manage_security') && (
+          <DashboardCard
+            title="Security"
+            desc="Password and access logs."
+            icon="🔒"
+            onClick={() => navigate("/admin/change-password")}
+            accent="text-yellow-400"
+            border="hover:border-yellow-500/50"
+          />
+        )}
+
+        {/* --- FORMS --- */}
+        {hasPermission('can_manage_forms') && (
+          <DashboardCard
+            title="Dynamic Forms"
+            desc="Create recruitment or feedback forms."
+            icon="📝"
+            onClick={() => navigate("/admin/forms")}
+            accent="text-orange-400"
+            border="hover:border-orange-500/50"
+          />
+        )}
 
       </div>
     </div>
@@ -189,6 +231,24 @@ function DashboardCard({ title, desc, icon, onClick, accent, border }) {
       <p className="text-sm text-gray-400 leading-relaxed">
         {desc}
       </p>
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon, color }) {
+  const colors = {
+    cyan: "from-cyan-500/20 to-blue-500/20 text-cyan-400 border-cyan-500/30",
+    purple: "from-purple-500/20 to-pink-500/20 text-purple-400 border-purple-500/30",
+    green: "from-green-500/20 to-emerald-500/20 text-green-400 border-green-500/30"
+  };
+
+  return (
+    <div className={`bg-gradient-to-br ${colors[color]} border rounded-xl p-4 flex items-center gap-4`}>
+      <div className="text-2xl">{icon}</div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">{label}</p>
+        <p className="text-lg font-bold font-[Orbitron]">{value}</p>
+      </div>
     </div>
   );
 }

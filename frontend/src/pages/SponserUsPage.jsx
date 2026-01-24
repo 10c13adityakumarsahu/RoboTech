@@ -118,7 +118,7 @@ export default function SponsorUsPage() {
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/sponsorship`,
+        `${import.meta.env.VITE_API_BASE_URL}/sponsorship/`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -159,7 +159,7 @@ export default function SponsorUsPage() {
 
   return (
     <>
-    <Navbar></Navbar>
+      <Navbar></Navbar>
       {/* ===== BACKGROUND VIDEO ===== */}
       <video
         autoPlay
@@ -351,10 +351,9 @@ export default function SponsorUsPage() {
       {toast.show && (
         <div
           className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-lg shadow-lg text-sm
-            ${
-              toast.type === "success"
-                ? "bg-green-600"
-                : toast.type === "error"
+            ${toast.type === "success"
+              ? "bg-green-600"
+              : toast.type === "error"
                 ? "bg-red-600"
                 : "bg-indigo-600"
             }`}

@@ -7,6 +7,7 @@ class ThreadMessageSerializer(serializers.ModelSerializer):
     class Meta:
         model = ThreadMessage
         fields = '__all__'
+        read_only_fields = ['author']
 
 class ProjectThreadSerializer(serializers.ModelSerializer):
     messages = ThreadMessageSerializer(many=True, read_only=True)

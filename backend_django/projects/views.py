@@ -113,10 +113,32 @@ class ProjectThreadViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
+    @action(detail=True, methods=['post'])
+    def toggle_ephemeral(self, request, pk=None):
+        thread = self.get_object()
+        thread.is_ephemeral = not thread.is_ephemeral
+        thread.save()
+        return Response({'is_ephemeral': thread.is_ephemeral})
+
+    @action(detail=True, methods=['post'])
+    def purge_messages(self, request, pk=None):
+        thread = self.get_object()
+        count = thread.messages.all().delete()[0]
+        return Response({'status': 'purged', 'count': count})
+
 class ThreadMessageViewSet(viewsets.ModelViewSet):
     queryset = ThreadMessage.objects.all()
     serializer_class = ThreadMessageSerializer
     permission_classes = [GlobalPermission]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        message = serializer.save(author=self.request.user)
+        
+        # EPHEMERAL CLEANUP: If thread is ephemeral, delete messages older than 1 hour
+        if message.thread.is_ephemeral:
+            from django.utils import timezone
+            from datetime import timedelta
+            expiry = timezone.now() - timedelta(hours=1)
+            ThreadMessage.objects.filter(thread=message.thread, created_at__lt=expiry).delete()
+            # Also log for audit
+            print(f"Cleanup performed for ephemeral thread: {message.thread.title}")

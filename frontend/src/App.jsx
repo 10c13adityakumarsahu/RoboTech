@@ -29,12 +29,16 @@ import AdminEvents from "./pages/admin/AdminEvents";
 import AdminEventForm from "./pages/admin/AdminEventForm";
 import AdminRolesPage from "./pages/admin/AdminRolesPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
-import AdminTaxonomyPage from "./pages/admin/AdminTaxonomyPage"; // NEW
+import AdminTaxonomyPage from "./pages/admin/AdminTaxonomyPage";
+import AdminFormsPage from "./pages/admin/AdminFormsPage";
+import AdminFormBuilder from "./pages/admin/AdminFormBuilder";
+import AdminFormResponses from "./pages/admin/AdminFormResponses";
 import AdminSponsorshipMessages from "./pages/admin/AdminSponsorship"
 
 /* ===== PUBLIC DETAILS ===== */
 import AnnouncementsPage from "./pages/AnnouncementsPage"
 import AnnouncementDetailPage from "./pages/AnnouncementDetailPage"
+import PublicFormView from "./pages/PublicFormView"
 
 // ERROR PAGES
 import Error404 from "./pages/Error404";
@@ -53,6 +57,7 @@ function App() {
       <Route path="/announcements" element={<AnnouncementsPage />} />
       <Route path="/announcements/:id" element={<AnnouncementDetailPage />} />
       <Route path="/sponsorship" element={<SponsorshipPage />} />
+      <Route path="/forms/:id" element={<PublicFormView />} />
 
       {/* ===== AUTH ROUTES ===== */}
       <Route path="/login" element={<AdminLogin />} />
@@ -80,6 +85,9 @@ function App() {
 
         <Route path="sponsorship" element={<AdminSponsorshipMessages />} />
         <Route path="contactMessages" element={<AdminContactMessages />} />
+        <Route path="forms" element={<AdminFormsPage />} />
+        <Route path="forms/:id" element={<AdminFormBuilder />} />
+        <Route path="forms/:id/responses" element={<AdminFormResponses />} />
 
         <Route path="change-password" element={<ChangePassword />} />
         <Route path="audit-logs" element={<AdminAuditLogs />} />

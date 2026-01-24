@@ -242,11 +242,31 @@ class UserProfileView(APIView):
         data = request.data
         profile, _ = MemberProfile.objects.get_or_create(user=user)
         
+        # User core fields
+        if 'email' in data:
+             user.email = data['email']
+             user.save()
+
         def set_if(field):
-            if field in data: setattr(profile, field, data[field])
+            if field in data:
+                val = data[field]
+                if field == 'year_of_joining' and val:
+                    try: val = int(val)
+                    except: val = None
+                setattr(profile, field, val)
         
-        # ... mapping ...
+        fields = ['full_name', 'roll_number', 'department', 'sig', 'year', 
+                  'year_of_joining', 'description', 'linkedin_url', 
+                  'github_url', 'instagram_url']
+        
+        for f in fields: set_if(f)
+
+        if 'is_public' in data:
+            val = data['is_public']
+            profile.is_public = (val == 'true' or val is True)
+
         if 'image' in request.FILES: profile.image = request.FILES['image']
+        
         profile.save()
         
         log_audit(request, "PROFILE_SELF_UPDATE", f"User {user.username} updated own profile")

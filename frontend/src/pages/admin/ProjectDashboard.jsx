@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, useOutletContext } from "react-router-dom";
+import { useParams, useNavigate, useOutletContext, useSearchParams } from "react-router-dom";
 import api from "../../api/axios";
 
 // Icons
@@ -11,10 +11,15 @@ const DeadlineIcon = () => <svg className="w-5 h-5" fill="none" stroke="currentC
 export default function ProjectDashboard() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { user } = useOutletContext();
     const [project, setProject] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState("overview");
+
+    const activeTab = searchParams.get("tab") || "overview";
+    const setActiveTab = (tab) => {
+        setSearchParams({ tab });
+    };
 
     useEffect(() => {
         loadProject();
@@ -47,8 +52,8 @@ export default function ProjectDashboard() {
                     <div>
                         <div className="flex items-center gap-3 mb-2">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${project.status === 'COMPLETED' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                                    project.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                                        'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                                project.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                    'bg-gray-500/20 text-gray-400 border border-gray-500/30'
                                 }`}>{project.status.replace("_", " ")}</span>
                             {project.deadline && (
                                 <span className="flex items-center gap-1 text-xs text-red-400 font-medium">
@@ -223,95 +228,144 @@ function TasksTab({ project, user, onUpdate }) {
 }
 
 function DiscussionsTab({ project, user, onUpdate }) {
-    const [threads, setThreads] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [msg, setMsg] = useState("");
-    const [activeThread, setActiveThread] = useState(null);
-
-    useEffect(() => {
-        setThreads(project.threads || []);
-        setLoading(false);
-    }, [project]);
+    const [activeThreadId, setActiveThreadId] = useState(null);
 
     const handleCreateThread = async () => {
         const title = prompt("Thread Subject:");
         if (!title) return;
         try {
-            await api.post("/threads/", { title, project: project.id });
+            const res = await api.post("/threads/", { title, project: project.id });
+            setActiveThreadId(res.data.id);
             onUpdate();
-        } catch (err) { alert("Failed"); }
+        } catch (err) { alert("Failed to deploy channel."); }
     }
 
     const handleSendMsg = async (e) => {
         e.preventDefault();
-        if (!msg.trim() || !activeThread) return;
+        if (!msg.trim() || !activeThreadId) return;
         try {
-            await api.post("/messages/", { content: msg, thread: activeThread.id });
+            await api.post("/messages/", { content: msg, thread: activeThreadId });
             setMsg("");
             onUpdate();
-            // Since threads are nested in project, we need to refresh project data.
-            // We might want to find the thread in the updated project to keep context.
         } catch (err) { console.error(err); }
     }
 
-    const currentThread = project.threads?.find(t => t.id === activeThread?.id);
+    const handleToggleEphemeral = async (id) => {
+        try {
+            await api.post(`/threads/${id}/toggle_ephemeral/`);
+            onUpdate();
+        } catch (err) { alert("Logic failure."); }
+    }
+
+    const handlePurgeMessages = async (id) => {
+        if (!window.confirm("Purge History: Permanently delete ALL messages in this node?")) return;
+        try {
+            await api.post(`/threads/${id}/purge_messages/`);
+            onUpdate();
+        } catch (err) { alert("Wipe failed."); }
+    }
+
+    const handleDeleteThread = async (id) => {
+        if (!window.confirm("Nuclear Option: Archive this entire channel?")) return;
+        try {
+            await api.delete(`/threads/${id}/`);
+            if (activeThreadId === id) setActiveThreadId(null);
+            onUpdate();
+        } catch (err) { alert("Failed."); }
+    }
+
+    const currentThread = project.threads?.find(t => t.id === activeThreadId);
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[500px]">
-            <div className="md:col-span-1 bg-white/5 border border-white/10 rounded-xl overflow-hidden flex flex-col">
-                <div className="p-3 border-b border-white/10 bg-white/5 flex justify-between items-center">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">Channels</span>
-                    <button onClick={handleCreateThread} className="text-cyan-400 hover:text-cyan-300 text-lg">+</button>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 h-[600px]">
+            {/* Sidebar */}
+            <div className="md:col-span-1 bg-white/5 border border-white/10 rounded-xl overflow-hidden flex flex-col backdrop-blur-md">
+                <div className="p-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Communication Nodes</span>
+                    <button onClick={handleCreateThread} className="w-8 h-8 rounded-full bg-cyan-600/20 text-cyan-400 flex items-center justify-center font-bold text-xl hover:bg-cyan-600 hover:text-white transition-all">+</button>
                 </div>
-                <div className="flex-1 overflow-y-auto no-scrollbar">
+                <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-1">
                     {project.threads?.map(t => (
-                        <button
-                            key={t.id}
-                            onClick={() => setActiveThread(t)}
-                            className={`w-full text-left p-4 text-sm transition-all border-l-2 ${activeThread?.id === t.id ? 'bg-cyan-500/10 border-cyan-500 text-cyan-400' : 'border-transparent text-gray-400 hover:bg-white/5'
-                                }`}
-                        >
-                            # {t.title}
-                        </button>
+                        <div key={t.id} className="group relative">
+                            <button
+                                onClick={() => setActiveThreadId(t.id)}
+                                className={`w-full text-left p-3 rounded-lg text-xs transition-all flex flex-col gap-1 ${activeThreadId === t.id ? 'bg-cyan-600 text-white shadow-lg' : 'text-gray-400 hover:bg-white/5'}`}
+                            >
+                                <span className={`${activeThreadId === t.id ? 'font-bold' : ''}`}># {t.title}</span>
+                                {t.is_ephemeral && <span className={`text-[8px] font-black uppercase tracking-widest ${activeThreadId === t.id ? 'text-cyan-200' : 'text-orange-500'}`}>⚡ Ephemeral</span>}
+                            </button>
+                            <button
+                                onClick={() => handleDeleteThread(t.id)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-[10px] text-red-500 hover:scale-125 transition-all"
+                            >✕</button>
+                        </div>
                     ))}
-                    {!project.threads?.length && <p className="text-gray-600 text-center text-xs mt-10 p-4 italic uppercase">No communication channels established.</p>}
+                    {!project.threads?.length && <p className="text-gray-700 text-center text-[10px] mt-10 p-4 italic uppercase tracking-widest">No signals detected.</p>}
                 </div>
             </div>
 
-            <div className="md:col-span-3 bg-white/5 border border-white/10 rounded-xl flex flex-col overflow-hidden">
+            {/* Chat Area */}
+            <div className="md:col-span-3 bg-white/5 border border-white/10 rounded-xl flex flex-col overflow-hidden relative">
                 {currentThread ? (
                     <>
-                        <div className="p-4 border-b border-white/10">
-                            <h3 className="font-[Orbitron] font-bold text-gray-200"># {currentThread.title}</h3>
+                        <div className="p-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
+                            <div>
+                                <h3 className="font-[Orbitron] font-bold text-gray-200 uppercase tracking-tighter"># {currentThread.title}</h3>
+                                {currentThread.is_ephemeral && <p className="text-[8px] font-black text-orange-400 uppercase tracking-widest animate-pulse mt-1">Self-Destruct Protocol Active: Messages expire in 1 hour</p>}
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => handlePurgeMessages(currentThread.id)}
+                                    className="text-[8px] font-black text-red-500 hover:text-red-400 uppercase tracking-widest transition-all"
+                                >
+                                    Wipe History
+                                </button>
+                                <button
+                                    onClick={() => handleToggleEphemeral(currentThread.id)}
+                                    className={`px-3 py-1 rounded text-[8px] font-black uppercase tracking-widest border transition-all ${currentThread.is_ephemeral ? 'bg-orange-600/20 border-orange-500 text-orange-400 shadow-[0_0_10px_rgba(249,115,22,0.2)]' : 'bg-gray-800 border-gray-700 text-gray-500 hover:border-gray-500'}`}
+                                >
+                                    {currentThread.is_ephemeral ? 'Disable Ephemerality' : 'Enable Ephemerality'}
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar bg-black/10">
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar bg-black/20">
                             {currentThread.messages?.map(m => (
-                                <div key={m.id} className={`flex flex-col ${m.author === user.id ? 'items-end' : 'items-start'}`}>
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-[10px] text-gray-500 font-bold">{m.author_details?.username}</span>
-                                        <span className="text-[8px] text-gray-600">{new Date(m.created_at).toLocaleTimeString()}</span>
+                                <div key={m.id} className={`flex flex-col ${m.author === user.id ? 'items-end' : 'items-start'} animate-slide-in`}>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className={`text-[10px] font-bold ${m.author === user.id ? 'text-cyan-400' : 'text-gray-500'}`}>{m.author_details?.username}</span>
+                                        <span className="text-[8px] text-gray-700 font-mono">{new Date(m.created_at).toLocaleTimeString()}</span>
                                     </div>
-                                    <div className={`p-3 rounded-lg text-sm max-w-[80%] ${m.author === user.id ? 'bg-cyan-600 text-white rounded-tr-none' : 'bg-white/10 text-gray-100 rounded-tl-none'
-                                        }`}>
+                                    <div className={`p-4 rounded-2xl text-sm max-w-[75%] leading-relaxed shadow-xl ${m.author === user.id ? 'bg-cyan-600 text-white rounded-tr-none' : 'bg-white/5 text-gray-100 border border-white/5 rounded-tl-none'}`}>
                                         {m.content}
                                     </div>
                                 </div>
                             ))}
-                            {!currentThread.messages?.length && <p className="text-gray-700 text-center text-xs mt-20 italic">Encrypted channel ready. Send a message to start.</p>}
+                            {!currentThread.messages?.length && (
+                                <div className="h-full flex flex-col items-center justify-center opacity-20 scale-150">
+                                    <span className="text-4xl mb-4">🛡️</span>
+                                    <p className="text-[8px] font-black uppercase tracking-[0.4em]">Channel Dark</p>
+                                </div>
+                            )}
                         </div>
-                        <form onSubmit={handleSendMsg} className="p-4 bg-black/30 border-t border-white/10 flex gap-4">
+
+                        <form onSubmit={handleSendMsg} className="p-6 bg-black/40 border-t border-white/10 flex gap-4">
                             <input
-                                className="flex-1 bg-black/40 border border-white/10 rounded-lg px-4 py-2 text-sm outline-none focus:border-cyan-500"
-                                placeholder="Enter message..."
+                                className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-sm outline-none focus:border-cyan-500 transition-all font-medium"
+                                placeholder={`Transmit to #${currentThread.title}...`}
                                 value={msg}
                                 onChange={e => setMsg(e.target.value)}
                             />
-                            <button className="bg-cyan-500 text-black px-6 py-2 rounded-lg font-bold text-sm">Send</button>
+                            <button className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-95 transition-all">Send</button>
                         </form>
                     </>
                 ) : (
-                    <div className="flex-1 flex items-center justify-center text-gray-600 uppercase text-xs tracking-widest bg-black/20">
-                        Select a channel to decrypt communications
+                    <div className="flex-1 flex flex-col items-center justify-center bg-black/20">
+                        <div className="w-20 h-20 rounded-full border border-white/10 flex items-center justify-center mb-6 animate-pulse">
+                            <DiscussionIcon />
+                        </div>
+                        <p className="text-gray-600 uppercase text-[10px] tracking-[0.5em] font-black">Select Node to Decrypt</p>
                     </div>
                 )}
             </div>
@@ -320,13 +374,50 @@ function DiscussionsTab({ project, user, onUpdate }) {
 }
 
 function TeamTab({ project, user, onUpdate }) {
-    const [showManage, setShowManage] = useState(false);
+    const [allUsers, setAllUsers] = useState([]);
     const isLead = project.lead === user.id || user.is_superuser;
+
+    useEffect(() => {
+        if (isLead) {
+            api.get("/management/").then(res => setAllUsers(res.data)).catch(err => console.error(err));
+        }
+    }, [isLead]);
+
+    const handleAddMember = async (targetUserId) => {
+        if (!targetUserId) return;
+        const newMembers = [...(project.members || []), parseInt(targetUserId)];
+        try {
+            await api.patch(`/projects/${project.id}/`, { members: newMembers });
+            onUpdate();
+        } catch (err) { alert("Deployment failed."); }
+    }
+
+    const handleRemoveMember = async (targetUserId) => {
+        const newMembers = project.members.filter(id => id !== targetUserId);
+        try {
+            await api.patch(`/projects/${project.id}/`, { members: newMembers });
+            onUpdate();
+        } catch (err) { alert("Operation failed."); }
+    }
 
     return (
         <div className="space-y-8">
             <div>
-                <h3 className="text-sm font-bold text-gray-500 uppercase mb-6 tracking-widest">Active Personnel</h3>
+                <h3 className="text-sm font-bold text-gray-500 uppercase mb-6 tracking-widest flex justify-between items-center">
+                    Active Personnel
+                    {isLead && (
+                        <select
+                            className="bg-white/5 border border-white/10 rounded text-[10px] font-bold uppercase p-1 outline-none hover:border-cyan-500 transition-all"
+                            onChange={(e) => handleAddMember(e.target.value)}
+                            value=""
+                        >
+                            <option value="">+ Manually Enroll</option>
+                            {allUsers.filter(u => !project.members?.includes(u.id) && u.id !== project.lead).map(u => (
+                                <option key={u.id} value={u.id}>{u.username}</option>
+                            ))}
+                        </select>
+                    )}
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div className="bg-cyan-500/10 border border-cyan-500/30 p-4 rounded-xl flex items-center gap-4 relative overflow-hidden group">
                         <div className="absolute -right-4 -top-4 text-cyan-500/10 scale-150 rotate-12 transition-transform group-hover:rotate-0"><UserIcon /></div>
@@ -337,12 +428,18 @@ function TeamTab({ project, user, onUpdate }) {
                         </div>
                     </div>
                     {project.members_details?.map(m => (
-                        <div key={m.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center gap-4 hover:border-white/30 transition-all">
+                        <div key={m.id} className="bg-white/5 border border-white/10 p-4 rounded-xl flex items-center gap-4 hover:border-white/30 transition-all group overflow-hidden relative">
                             <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center font-bold">{m.username[0]}</div>
                             <div>
                                 <h4 className="font-bold text-gray-200">{m.profile?.full_name || m.username}</h4>
                                 <p className="text-[10px] text-gray-500 font-bold uppercase">{m.profile?.position || "Field Agent"}</p>
                             </div>
+                            {isLead && (
+                                <button
+                                    onClick={() => handleRemoveMember(m.id)}
+                                    className="absolute -right-10 group-hover:right-2 top-1/2 -translate-y-1/2 bg-red-500/20 text-red-500 p-2 rounded-lg hover:bg-red-500 hover:text-white transition-all text-xs"
+                                >REMOVE</button>
+                            )}
                         </div>
                     ))}
                 </div>

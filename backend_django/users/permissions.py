@@ -9,18 +9,23 @@ class GlobalPermission(permissions.BasePermission):
     """
     def has_permission(self, request, view):
         user = request.user
+        view_name = view.__class__.__name__
+        
+        # 0. Public Bypass for Submissions (Unauthenticated ok)
+        public_post_views = [
+            'FormResponseViewSet', 
+            'ContactMessageViewSet', 
+            'SponsorshipViewSet'
+        ]
+        if view_name in public_post_views and request.method == 'POST':
+            return True
+
         if not user or not user.is_authenticated:
             return False
         
         # 1. Superuser/Admin Bypass
         if user.is_superuser:
             return True
-
-        # 2. Get all relevant Role flags for the user
-        def get_user_flags():
-            # I'll check flags in the view logic for performance/simplicity
-            # but here I define what they are.
-            pass
 
         # Helper: check for specific flag across all sources
         def check_flag(flag_name):
@@ -49,7 +54,6 @@ class GlobalPermission(permissions.BasePermission):
             return True
 
         # 5. Mutation Mapping
-        view_name = view.__class__.__name__
         perm_map = {
             'UserViewSet': 'can_manage_users',
             'RoleViewSet': 'can_manage_users',
@@ -63,7 +67,12 @@ class GlobalPermission(permissions.BasePermission):
             'GalleryViewSet': 'can_manage_gallery',
             'SponsorshipViewSet': 'can_manage_announcements',
             'ContactMessageViewSet': 'can_manage_announcements',
+            'ProjectThreadViewSet': 'can_manage_projects',
+            'ThreadMessageViewSet': 'can_manage_projects',
             'AuditLogViewSet': 'can_manage_security',
+            'FormViewSet': 'can_manage_forms',
+            'FormSectionViewSet': 'can_manage_forms',
+            'FormFieldViewSet': 'can_manage_forms',
         }
 
         flag = perm_map.get(view_name)

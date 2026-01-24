@@ -87,6 +87,7 @@ class ProjectRequest(models.Model):
 class ProjectThread(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='threads')
     title = models.CharField(max_length=200)
+    is_ephemeral = models.BooleanField(default=False, help_text="If true, messages self-destruct after delivery/time")
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -28,7 +28,7 @@ export default function AdminSponsorshipPage() {
   async function loadInquiries() {
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/admin/sponsorship`,
+        `${import.meta.env.VITE_API_BASE_URL}/sponsorship/`,
         { credentials: "include" }
       );
 
@@ -52,7 +52,7 @@ export default function AdminSponsorshipPage() {
 
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/admin/sponsorship/${deleteTarget.id}`,
+        `${import.meta.env.VITE_API_BASE_URL}/sponsorship/${deleteTarget.id}/`,
         {
           method: "DELETE",
           credentials: "include",
@@ -180,10 +180,9 @@ export default function AdminSponsorshipPage() {
                   onClick={() => setCurrentPage(i + 1)}
                   className={`
                     min-w-[40px] h-10 rounded
-                    ${
-                      currentPage === i + 1
-                        ? "bg-cyan-500 text-black"
-                        : "bg-gray-700"
+                    ${currentPage === i + 1
+                      ? "bg-cyan-500 text-black"
+                      : "bg-gray-700"
                     }
                   `}
                 >

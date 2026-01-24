@@ -101,15 +101,16 @@ export default function AdminSidebar({ user, logout }) {
                         <div className="my-4 border-t border-white/5 mx-4" />
                         <p className={`px-4 text-xs font-bold text-gray-600 uppercase mb-2 ${collapsed && "hidden"}`}>Content</p>
 
-                        <NavItem to="/admin/projects" icon="🚀" label="Projects" perm="can_manage_projects" />
+                        <NavItem to="/admin/projects" icon="🚀" label="Workspaces" />
                         <NavItem to="/admin/events" icon="📅" label="Events" perm="can_manage_events" />
                         <NavItem to="/admin/gallery" icon="🖼️" label="Gallery" perm="can_manage_gallery" />
                         <NavItem to="/admin/announcements" icon="📢" label="Announcements" perm="can_manage_announcements" />
 
                         <div className="my-4 border-t border-white/5 mx-4" />
 
-                        <NavItem to="/admin/sponsorship" icon="🤝" label="Sponsors" perm="can_manage_announcements" />
-                        <NavItem to="/admin/contactMessages" icon="✉️" label="Messages" perm="can_manage_announcements" />
+                        <NavItem to="/admin/sponsorship" icon="🤝" label="Sponsors" perm="can_manage_sponsorship" />
+                        <NavItem to="/admin/contactMessages" icon="✉️" label="Messages" perm="can_manage_messages" />
+                        <NavItem to="/admin/forms" icon="📝" label="Forms" perm="can_manage_forms" />
 
                         {/* Only show Security/Audit Logs to authorized users */}
                         {hasPerm('can_manage_security') && (
