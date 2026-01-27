@@ -26,10 +26,36 @@ export default function TeamPage() {
       // Group logic: profile.sig
       const grouped = res.data.reduce((acc, user) => {
         const profile = user.profile || {};
-        // Default SIG if empty
-        const sig = profile.sig ? profile.sig : "General Members";
-        if (!acc[sig]) acc[sig] = [];
-        acc[sig].push(user);
+
+        // 1. Primary SIG (if any)
+        if (profile.sig) {
+          if (!acc[profile.sig]) acc[profile.sig] = [];
+          acc[profile.sig].push(user);
+        }
+
+        // 2. Secondary SIGs (from ManyToMany field 'sigs')
+        // The API returns 'sigs' typically as a list of objects [{id, name}, ...] or strings based on serializer.
+        // Assuming user.profile.sigs is available (check serializer).
+        if (profile.sigs && Array.isArray(profile.sigs)) {
+          profile.sigs.forEach(s => {
+            const sName = typeof s === 'object' ? s.name : s;
+            // Avoid duplicates if primary sig is same as one of secondary
+            if (sName !== profile.sig) {
+              if (!acc[sName]) acc[sName] = [];
+
+              // Check if user already pushed to this bucket (unlikely if unique set of sigs)
+              const existing = acc[sName].find(u => u.id === user.id);
+              if (!existing) acc[sName].push(user);
+            }
+          });
+        }
+
+        // 3. Fallback: If no SIGs at all, put in "General Members"
+        if (!profile.sig && (!profile.sigs || profile.sigs.length === 0)) {
+          if (!acc["General Members"]) acc["General Members"] = [];
+          acc["General Members"].push(user);
+        }
+
         return acc;
       }, {});
 

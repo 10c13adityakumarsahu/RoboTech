@@ -37,6 +37,7 @@ class AuditLogSerializer(serializers.ModelSerializer):
 class MemberProfileSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(required=False)
     custom_fields = serializers.JSONField(required=False)
+    sigs = SigSerializer(many=True, read_only=True)
     
     class Meta:
         model = MemberProfile
