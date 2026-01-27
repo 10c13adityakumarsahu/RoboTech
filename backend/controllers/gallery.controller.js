@@ -9,14 +9,18 @@ export async function getAdminGallery(req, res) {
   try {
     const { rows } = await db.query(`
       SELECT
-        id,
-        image_path,
-        caption,
-        is_active,
-        created_at
-      FROM gallery
-      WHERE is_deleted = FALSE
-      ORDER BY created_at DESC
+        g.id,
+        g.image_path,
+        g.caption,
+        g.title,
+        g.event_id,
+        e.title as event_title,
+        g.is_active,
+        g.created_at
+      FROM gallery g
+      LEFT JOIN events e ON g.event_id = e.id
+      WHERE g.is_deleted = FALSE
+      ORDER BY g.created_at DESC
     `);
 
     res.json(rows);
@@ -46,14 +50,15 @@ export async function uploadGalleryImages(req, res) {
       });
 
       const imagePath = `/media/gallery/${filename}`;
+      const { title, event_id } = req.body;
 
       const { rows } = await db.query(
         `
-        INSERT INTO gallery (image_path)
-        VALUES ($1)
+        INSERT INTO gallery (image_path, title, event_id)
+        VALUES ($1, $2, $3)
         RETURNING *
         `,
-        [imagePath]
+        [imagePath, title || null, event_id || null]
       );
 
       savedImages.push(rows[0]);

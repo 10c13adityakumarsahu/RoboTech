@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import api from "../../api/axios";
 import { buildMediaUrl } from "../../../utils/mediaUrl";
 
@@ -15,6 +15,9 @@ const ALLOWED_IMAGE_TYPES = [
 export default function AdminEventForm() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const dateParam = searchParams.get('date');
+
   const isEdit = Boolean(id);
 
   const [form, setForm] = useState({
@@ -29,7 +32,7 @@ export default function AdminEventForm() {
     registration_end: "",
     external_registration_link: "",
     external_links: [],
-    event_date: "",
+    event_date: dateParam || "",
     due_date: ""
   });
 

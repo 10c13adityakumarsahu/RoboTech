@@ -7,7 +7,13 @@ export default function AdminGalleryPage() {
   const navigate = useNavigate();
 
   const [images, setImages] = useState([]);
+  const [events, setEvents] = useState([]);
   const [uploading, setUploading] = useState(false);
+
+  // Upload Form State
+  const [uploadTitle, setUploadTitle] = useState("");
+  const [selectedEventId, setSelectedEventId] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState(null);
 
   const [deleteId, setDeleteId] = useState(null);
   const [deleting, setDeleting] = useState(false);
@@ -23,6 +29,7 @@ export default function AdminGalleryPage() {
 
   useEffect(() => {
     loadImages();
+    loadEvents();
   }, []);
 
   const loadImages = async () => {
@@ -31,6 +38,17 @@ export default function AdminGalleryPage() {
       setImages(res.data.results || res.data);
     } catch (err) {
       console.error("Failed to load gallery", err);
+    }
+  };
+
+  const loadEvents = async () => {
+    try {
+      // Fetch simple list of events for dropdown
+      const res = await api.get("/events/?limit=100");
+      const list = res.data.results || res.data || [];
+      setEvents(list);
+    } catch (err) {
+      console.error("Failed to load events", err);
     }
   };
 
@@ -45,32 +63,49 @@ export default function AdminGalleryPage() {
 
   /* ================= UPLOAD ================= */
 
-  const upload = async (fileList) => {
-    if (!fileList || fileList.length === 0) return;
+  const handleFileSelect = (files) => {
+    setSelectedFiles(files);
+  };
 
-    for (const file of fileList) {
-      if (file.size > 800 * 1024) {
-        showToast(
-          `"${file.name}" exceeds the maximum allowed size of 800 KB.`,
-          "error"
-        );
+  const handleUploadSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedFiles || selectedFiles.length === 0) {
+      showToast("Please select at least one image.", "error");
+      return;
+    }
+
+    for (const file of selectedFiles) {
+      if (file.size > 2 * 1024 * 1024) { // Increased to 2MB as mostly standard
+        showToast(`"${file.name}" is too large (max 2MB).`, "error");
         return;
       }
     }
 
     const fd = new FormData();
-    Array.from(fileList).forEach((file) => {
+    Array.from(selectedFiles).forEach((file) => {
       fd.append("images", file);
     });
+
+    // Append metadata
+    if (uploadTitle) fd.append("title", uploadTitle);
+    if (selectedEventId) fd.append("event_id", selectedEventId);
 
     try {
       setUploading(true);
       await api.post("/gallery/upload/", fd);
       await loadImages();
+
+      // Reset form
+      setUploadTitle("");
+      setSelectedEventId("");
+      setSelectedFiles(null);
+      // Reset file input manually if needed, but since we use label trick, just clearing state is enough logic-wise. 
+      // User will see "Choose Images" again.
+
       showToast("Images uploaded successfully.", "success");
     } catch (err) {
       console.error("Upload failed", err);
-      showToast("Failed to upload images. Please try again.", "error");
+      showToast("Failed to upload images.", "error");
     } finally {
       setUploading(false);
     }
@@ -128,40 +163,77 @@ export default function AdminGalleryPage() {
       </div>
 
       {/* ===== UPLOAD CARD ===== */}
-      <div className="mb-8 p-5 rounded-xl border border-white/10 bg-white/5">
-        <p className="text-sm text-gray-300 mb-3">
-          Upload one or more images (max 800 KB per image).
-        </p>
+      {/* ===== UPLOAD CARD ===== */}
+      <div className="mb-8 p-6 rounded-xl border border-white/10 bg-[#0F0F12] shadow-lg">
+        <h2 className="text-lg font-semibold text-cyan-400 mb-4">Add New Image</h2>
 
-        <label
-          className={`
-            inline-flex items-center gap-3 px-4 py-2 rounded-lg
-            border border-dashed border-cyan-400/40
-            cursor-pointer transition
-            hover:bg-white/5
-            ${uploading ? "opacity-60 cursor-not-allowed" : ""}
-          `}
-        >
-          <span className="text-sm text-cyan-300">
-            Choose Images
-          </span>
-
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            disabled={uploading}
-            onChange={(e) => upload(e.target.files)}
-            className="hidden"
-          />
-        </label>
-
-        {uploading && (
-          <div className="flex items-center gap-2 mt-3 text-gray-400 text-sm">
-            <span className="animate-spin">⏳</span>
-            Uploading images…
+        <form onSubmit={handleUploadSubmit} className="flex flex-col gap-4 max-w-xl">
+          {/* Title Input */}
+          <div>
+            <label className="text-sm text-gray-400 mb-1 block">Image Title (Optional)</label>
+            <input
+              type="text"
+              value={uploadTitle}
+              onChange={(e) => setUploadTitle(e.target.value)}
+              placeholder="e.g. RoboWars Final 2024"
+              className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm focus:border-cyan-500/50 outline-none transition"
+            />
           </div>
-        )}
+
+          {/* Event Select */}
+          <div>
+            <label className="text-sm text-gray-400 mb-1 block">Associate with Event (Optional)</label>
+            <select
+              value={selectedEventId}
+              onChange={(e) => setSelectedEventId(e.target.value)}
+              className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm focus:border-cyan-500/50 outline-none transition"
+            >
+              <option value="">-- No Event --</option>
+              {events.map(ev => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.title} ({ev.event_date ? new Date(ev.event_date).toLocaleDateString() : 'TBD'})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* File Input */}
+          <div>
+            <label className="text-sm text-gray-400 mb-1 block">File (Max 2MB)</label>
+            <div className="flex gap-4 items-center">
+              <label className={`
+                        flex-1
+                        flex flex-col items-center gap-2 p-4 rounded-lg
+                        border border-dashed border-white/20
+                        cursor-pointer transition
+                        hover:bg-white/5 hover:border-cyan-400/50
+                        ${uploading ? "opacity-50 cursor-not-allowed" : ""}
+                    `}>
+                <span className="text-sm text-gray-400">
+                  {selectedFiles && selectedFiles.length > 0
+                    ? `${selectedFiles.length} file(s) selected`
+                    : "Click to select image"}
+                </span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  disabled={uploading}
+                  onChange={(e) => handleFileSelect(e.target.files)}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={uploading || !selectedFiles}
+            className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2.5 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+          >
+            {uploading ? "Uploading..." : "Upload to Gallery"}
+          </button>
+        </form>
       </div>
 
       {/* ===== GRID ===== */}
@@ -177,6 +249,13 @@ export default function AdminGalleryPage() {
               className="w-full h-40 object-cover transition-transform duration-300 group-hover:scale-105"
               alt=""
             />
+
+            {/* Overlay Info */}
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3 pt-8 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end h-full pointer-events-none">
+              {img.title && <p className="text-white font-bold text-sm truncate">{img.title}</p>}
+              {img.event_title && <p className="text-cyan-400 text-[10px] uppercase font-bold tracking-wider truncate">{img.event_title}</p>}
+              {!img.title && !img.event_title && <p className="text-gray-500 text-xs italic">No metadata</p>}
+            </div>
 
             <button
               onClick={() => openDeleteModal(img.id)}
