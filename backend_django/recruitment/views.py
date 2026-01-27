@@ -3,13 +3,16 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import RecruitmentDrive, TimelineEvent
 from .serializers import RecruitmentDriveSerializer, TimelineEventSerializer
-from users.permissions import GlobalPermission
 from django.db import transaction
 
 class RecruitmentDriveViewSet(viewsets.ModelViewSet):
     queryset = RecruitmentDrive.objects.all().order_by('-created_at')
     serializer_class = RecruitmentDriveSerializer
-    permission_classes = [GlobalPermission]
+    # permission_classes = [GlobalPermission] -> Moved to get_permissions
+
+    def get_permissions(self):
+        from users.permissions import GlobalPermission
+        return [GlobalPermission()]
 
     @action(detail=False, methods=['get'])
     def active_public(self, request):
@@ -22,7 +25,11 @@ class RecruitmentDriveViewSet(viewsets.ModelViewSet):
 class TimelineEventViewSet(viewsets.ModelViewSet):
     queryset = TimelineEvent.objects.all()
     serializer_class = TimelineEventSerializer
-    permission_classes = [GlobalPermission]
+    # permission_classes = [GlobalPermission] -> Moved to get_permissions
+    
+    def get_permissions(self):
+        from users.permissions import GlobalPermission
+        return [GlobalPermission()]
 
     def perform_update(self, serializer):
         # Check if date changed, if so, update original_date if it wasn't set
