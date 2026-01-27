@@ -21,6 +21,7 @@ router.register(r'audit-logs', AuditLogViewSet, basename='audit_logs')
 urlpatterns = [
     path('', include(router.urls)),
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair_alias'),
     path('login/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('me/', UserProfileView.as_view(), name='user_profile'),
     path('team/public/', PublicTeamView.as_view(), name='team_public'),
