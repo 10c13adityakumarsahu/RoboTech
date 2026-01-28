@@ -78,7 +78,7 @@ export default function AdminLogin() {
           id="login-heading"
           className="text-xl sm:text-2xl font-semibold mb-6 text-center"
         >
-          Admin Login
+          Login
         </h2>
 
         {/* Error */}
